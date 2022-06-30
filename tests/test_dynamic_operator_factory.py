@@ -1,6 +1,8 @@
 import abc
 from typing import List
 
+import pytest
+
 from data_dag.operator_factory import DynamicOperatorFactory, OperatorFactory
 
 
@@ -87,3 +89,43 @@ def test_indirect_dynamic_class():
     assert obj1.x == 'yolo'
     assert isinstance(obj2, A1)
     assert obj2.x == 'wassup'
+
+
+def test_default_dynamic_class():
+    class ABase(DynamicOperatorFactory, abc.ABC):
+        __default_type_name__ = 'type2'
+
+    class A1(ABase):
+        __type_name__ = 'type1'
+        x: str
+
+    class A2(ABase):
+        __type_name__ = 'type2'
+        x: str
+
+    a1 = ABase.parse_obj({"type": "type1", "x": "wassup"})
+    assert isinstance(a1, A1)
+    assert a1.x == 'wassup'
+
+    a2 = ABase.parse_obj({"type": "type2", "x": "lol"})
+    assert isinstance(a2, A2)
+    assert a2.x == 'lol'
+
+    ad = ABase.parse_obj({"x": "default thing"})
+    assert isinstance(ad, A2)
+    assert ad.x == 'default thing'
+
+
+def test_erroneous_dynamic_class():
+    class ABase(DynamicOperatorFactory, abc.ABC):
+        pass
+
+    class A1(ABase):
+        __type_name__ = 'type1'
+        x: str
+
+    class A2(ABase):
+        __type_name__ = 'type2'
+        x: str
+
+    pytest.raises(TypeError, ABase.parse_obj, {"type": "typeNone", "x": "wassup"})

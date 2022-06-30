@@ -25,7 +25,10 @@ class _DynamicModelMetaclass(ModelMetaclass):
         try:
             subtype = kwargs.pop(kwarg_name)
         except KeyError as ex:
-            raise TypeError(f"Failed to find type kwarg `{kwarg_name}` while instantiating {cls}") from ex
+            if cls.__default_type_name__ is not None:
+                subtype = cls.__default_type_name__
+            else:
+                raise TypeError(f"Failed to find type kwarg `{kwarg_name}` while instantiating {cls}") from ex
         try:
             specified_cls = cls.__known_subclasses__[subtype]
         except KeyError as ex:
@@ -38,6 +41,7 @@ class _DynamicModelMetaclass(ModelMetaclass):
 class DynamicOperatorFactory(OperatorFactory, abc.ABC, metaclass=_DynamicModelMetaclass):
     __type_name__ = None
     __type_attr_name__ = '__type_name__'
+    __default_type_name__ = None
     __type_kwarg_name__ = 'type'
 
     def __init_subclass__(cls, **kwargs):
