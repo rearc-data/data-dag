@@ -5,3 +5,4 @@ apache-airflow
 # Testing
 pytest
 pytest-cov
+bump2version
