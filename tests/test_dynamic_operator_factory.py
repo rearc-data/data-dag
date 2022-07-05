@@ -118,3 +118,25 @@ def test_erroneous_dynamic_class():
         x: str
 
     pytest.raises(TypeError, ABase.parse_obj, {"type": "typeNone", "x": "wassup"})
+
+
+def test_failure_no_type_name():
+    with pytest.warns(UserWarning):
+
+        class ABase(DynamicOperatorFactory, abc.ABC):
+            pass
+
+        class _A1(ABase):
+            x: str
+
+
+def test_failure_no_type_given():
+    class ABase(DynamicOperatorFactory, abc.ABC):
+        pass
+
+    class A1(ABase):
+        __type_name__ = "type1"
+        x: str
+
+    with pytest.raises(TypeError):
+        ABase.parse_obj({"x": "junk"})

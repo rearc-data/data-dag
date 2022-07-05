@@ -15,8 +15,6 @@ class OperatorFactory(BaseModel, abc.ABC):
 class _DynamicModelMetaclass(ModelMetaclass):
     def __new__(mcs, *args, **kwargs):
         cls = super(_DynamicModelMetaclass, mcs).__new__(mcs, *args, **kwargs)
-        attr_name = cls.__type_attr_name__
-        assert attr_name.startswith("__"), (cls, attr_name)
         cls.__known_subclasses__ = dict()
         return cls
 
@@ -46,18 +44,12 @@ class DynamicOperatorFactory(
     OperatorFactory, abc.ABC, metaclass=_DynamicModelMetaclass
 ):
     __type_name__ = None
-    __type_attr_name__ = "__type_name__"
     __default_type_name__ = None
     __type_kwarg_name__ = "type"
 
     def __init_subclass__(cls, **kwargs):
         if not inspect.isabstract(cls) and abc.ABC not in cls.__bases__:
-            try:
-                subtype_name = cls.__type_name__
-            except (AttributeError, AssertionError) as ex:
-                raise TypeError(
-                    f"Must specify a subtype name {cls.__type_attr_name__} for non-abstract subclass {cls}"
-                ) from ex
+            subtype_name = cls.__type_name__
 
             if not subtype_name:
                 warnings.warn(
