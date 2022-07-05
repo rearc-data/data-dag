@@ -1,0 +1,7 @@
+# Core
+pydantic
+apache-airflow
+
+# Testing
+pytest
+pytest-cov
