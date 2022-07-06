@@ -3,7 +3,8 @@ from typing import List
 
 import pytest
 
-from data_dag.operator_factory import DynamicOperatorFactory, OperatorFactory
+from data_dag.operator_factory import OperatorFactory
+from data_dag.operator_factory.dynamic import DynamicOperatorFactory
 
 
 def test_direct_dynamic_class():

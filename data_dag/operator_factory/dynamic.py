@@ -2,16 +2,12 @@ import abc
 import inspect
 import warnings
 
-from pydantic import BaseModel
 from pydantic.main import ModelMetaclass
 
-
-class OperatorFactory(BaseModel, abc.ABC):
-    def make_operator(self, *args, **kwargs):
-        raise NotImplementedError()
+from data_dag.operator_factory import OperatorFactory
+from data_dag.operator_factory._utils import _SimpleModelMixin
 
 
-# With much help from https://stackoverflow.com/questions/23374715/changing-the-bases-of-an-object-based-on-arguments-to-init
 class _DynamicModelMetaclass(ModelMetaclass):
     def __new__(mcs, *args, **kwargs):
         cls = super(_DynamicModelMetaclass, mcs).__new__(mcs, *args, **kwargs)
@@ -40,6 +36,8 @@ class _DynamicModelMetaclass(ModelMetaclass):
         return super(_DynamicModelMetaclass, specified_cls).__call__(*args, **kwargs)
 
 
+# With much help from
+# https://stackoverflow.com/questions/23374715/changing-the-bases-of-an-object-based-on-arguments-to-init
 class DynamicOperatorFactory(
     OperatorFactory, abc.ABC, metaclass=_DynamicModelMetaclass
 ):

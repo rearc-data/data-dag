@@ -6,16 +6,23 @@ from airflow import DAG
 from airflow.operators.dummy import DummyOperator
 
 from data_dag.dag_factory import DagFactory
+from data_dag.operator_factory import SimpleOperatorFactory
 
 
 def test_simple():
+    class DummyOp(SimpleOperatorFactory):
+        name: str
+
+        def make_operator(self):
+            return DummyOperator(task_id=self.name)
+
     class SampleDag(DagFactory):
-        dummy_names: List[str]
+        dummy_names: List[DummyOp]
 
         def _make_dag(self):
             prev_op = None
-            for name in self.dummy_names:
-                next_op = DummyOperator(task_id=name)
+            for dummy in self.dummy_names:
+                next_op = dummy.make_operator()
                 if prev_op is not None:
                     prev_op >> next_op
                 prev_op = next_op
