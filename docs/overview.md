@@ -1,18 +1,26 @@
-Overview
-========
+# Overview
 
-`data-dag` is a library for writing data-defined Airflow DAGs and operators.
+`data-dag` provides a variety of tools to simplify the process of writing data-defined Airflow DAGs.
 
-Installation
-============
+This approach is incredibly useful when writing a large number of DAGs that rely, either in part or entirely, on shareable primitives. A primitive may or may not be a single Airflow operator. For example, you might want the following primitive to only create a table if it doesn't exist:
 
-```pip install data-dag```
+```{mermaid}
+graph LR
+    a["Check if table exists"] --> b["Create table (all_failed)"] --> c["Done (one_success)"]
+    a --> c
+```
 
-Example
-=======
+While it is certainly possible to write a more complicated operator that performs this logic, it's often easier, clearer, and more maintainable to work with existing operators. Additionally, writing factories like this is easy to stack to build multiple levels of abstractions, or to re-use components across multiple different abstractions.
+
+This pattern, in addition to simplifying and standardizing how multiple DAGs can be defined, also provides a framework for writing re-usable abstractions and operator compositions (for example, as a shareable plugin). This is because factories defined using `data-dag` can be defined in-code too, not just using data.
+
+`data-dag` is written on top of the excellent [`pydantic` library](https://pydantic-docs.helpmanual.io/), providing automatic type coercion, field validation, and serialization and deserialization against a variety of data formats.
+
+## Example
 
 Re-usable operator and DAG template can be stored in a central location, such as a custom Airflow plugin (or a package within `dags/` works fine too):
 
+(example_dag)=
 ```python
 # plugins/my_factories/download.py
 
@@ -80,7 +88,7 @@ downloads:
   path: manifest.json
 ```
 
-That data file can then be loaded into a DAG. Per Airflow's requirements, this must be done in a file located in `dags/` and the result must be saved into a uniquely named global variable. The simplest possible example is this:
+That data file can then be loaded into a DAG. Per Airflow's requirements, this must be done in a Python file located in `dags/` and the result must be saved into a uniquely named global variable. The simplest possible example is this:
 
 ```python
 # dags/sample_dag.py
@@ -94,13 +102,14 @@ with open('yaml/sample_dag.yaml', 'r') as f:
 dag = DownloaderDag.parse_obj(dag_data).make_dag()
 ```
 
-![img.png](docs/_images/img.png)
+![img.png](_images/img.png)
 
 Multiple DAGs
 -------------
 
 Obviously, using a template isn't much use if you only fill it in once. Here's a simple example of a loader that will load any number of YML files from a folder and publish each one as a DAG in Airflow:
 
+(loader_script)=
 ```python
 # dags/load_yml_files.py
 
@@ -121,11 +130,5 @@ for yaml_file_path in dag_dir.glob('typical_dags/**.yml'):
     dag = dag_metadata_obj.make_dag()
 
     # See https://www.astronomer.io/guides/dynamically-generating-dags/
-    dag_name = yaml_file_path.with_suffix('').name
-    globals()[dag_name] = dag
+    globals()[dag_metadata_obj.dag_id] = dag
 ```
-
-Documentation
-=============
-
-Complete docs can be found at [https://data-dag.rtfd.org/]
