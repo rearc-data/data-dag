@@ -80,6 +80,10 @@ def test_indirect_dynamic_class():
     assert isinstance(obj2, A1)
     assert obj2.x == "wassup"
 
+    assert ABase.parse_obj({"type": "type1", "x": "yolo"}) == A1.parse_obj(
+        {"x": "yolo"}
+    )
+
 
 def test_default_dynamic_class():
     class ABase(DynamicOperatorFactory, abc.ABC):
@@ -106,7 +110,7 @@ def test_default_dynamic_class():
     assert ad.x == "default thing"
 
 
-def test_erroneous_dynamic_class():
+def test_failure_erroneous_dynamic_class():
     class ABase(DynamicOperatorFactory, abc.ABC):
         pass
 
@@ -141,3 +145,19 @@ def test_failure_no_type_given():
 
     with pytest.raises(TypeError):
         ABase.parse_obj({"x": "junk"})
+
+
+def test_failure_both_specified_and_explicit_type():
+    class ABase(DynamicOperatorFactory, abc.ABC):
+        pass
+
+    class A1(ABase):
+        __type_name__ = "type1"
+        x: str
+
+    with pytest.raises(TypeError):
+        A1.parse_obj({"type": "type2", "x": "junk"})
+
+    with pytest.raises(TypeError):
+        # This is more up for debate: should this fail when "type" is given, even when it's correct?
+        A1.parse_obj({"type": "type1", "x": "junk"})
