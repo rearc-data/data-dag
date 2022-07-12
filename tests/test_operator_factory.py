@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import pytest
 from airflow.operators.dummy import DummyOperator
@@ -68,3 +68,9 @@ def test_simple_failure_dict_field():
 
     with pytest.raises(NotImplementedError):
         SampleOp.parse_obj(dict())
+
+
+def test_none_not_the_same_as_undefined():
+    class SampleOp(SimpleOperatorComponent):
+        a: int
+        b: Optional[int]  # Defaults to None, so there's only one undefined field

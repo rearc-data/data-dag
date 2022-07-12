@@ -5,7 +5,6 @@ import warnings
 from pydantic.main import ModelMetaclass
 
 from data_dag.operator_factory import OperatorFactory
-from data_dag.operator_factory._utils import _SimpleModelMixin
 
 
 class _DynamicModelMetaclass(ModelMetaclass):
@@ -15,24 +14,38 @@ class _DynamicModelMetaclass(ModelMetaclass):
         return cls
 
     def __call__(cls, *args, **kwargs):
-        kwarg_name = cls.__type_kwarg_name__
-        try:
-            subtype = kwargs.pop(kwarg_name)
-        except KeyError as ex:
-            if cls.__default_type_name__ is not None:
-                subtype = cls.__default_type_name__
-            else:
-                raise TypeError(
-                    f"Failed to find type kwarg `{kwarg_name}` while instantiating {cls}"
-                ) from ex
-        try:
-            specified_cls = cls.__known_subclasses__[subtype]
-        except KeyError as ex:
-            raise TypeError(
-                f"Subtype `{subtype}` not found for {cls}. Options are {list(cls.__known_subclasses__)}"
-            ) from ex
+        known_subtype = cls.__type_name__
+        specified_subtype = kwargs.pop(
+            cls.__type_kwarg_name__, cls.__default_type_name__
+        )
 
-        print((specified_cls, args, kwargs))
+        if known_subtype is None and specified_subtype is None:
+            raise TypeError(
+                f"Failed to find type kwarg `{cls.__type_kwarg_name__}` while instantiating {cls}"
+            )
+        elif known_subtype is not None and specified_subtype is not None:
+            raise TypeError(
+                f"Cannot specify explicit `{cls.__type_kwarg_name__}` to specific type {cls}"
+            )
+
+        # At this point, we know that exactly one of known_subtype and specified_subtype is given
+        assert bool(known_subtype) ^ bool(specified_subtype), (
+            known_subtype,
+            specified_subtype,
+        )
+
+        if known_subtype:
+            specified_cls = cls
+        elif specified_subtype:
+            try:
+                specified_cls = cls.__known_subclasses__[specified_subtype]
+            except KeyError as ex:
+                raise TypeError(
+                    f"Subtype `{specified_subtype}` not found for {cls}. Options are {list(cls.__known_subclasses__)}"
+                ) from ex
+        else:  # pragma: no cover
+            assert False, ("How did we get here?", known_subtype, specified_subtype)
+
         return super(_DynamicModelMetaclass, specified_cls).__call__(*args, **kwargs)
 
 

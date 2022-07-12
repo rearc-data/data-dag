@@ -1,6 +1,7 @@
 import abc
 import inspect
-from typing import Any, Type, get_origin
+from typing import Any, Type
+from typing_extensions import get_origin
 
 from pydantic import BaseModel
 
@@ -28,17 +29,15 @@ class _SimpleModelMixin:
         assert issubclass(cls, BaseModel)
 
         if not inspect.isabstract(cls) and abc.ABC not in cls.__bases__:
-            non_default_fields = [
-                field
-                for field in cls.__fields__.values()
-                if field.default is None and field.default_factory is None
+            required_fields = [
+                field for field in cls.__fields__.values() if field.required
             ]
-            if len(non_default_fields) != 1:
+            if len(required_fields) != 1:
                 raise TypeError(
-                    f"A non-abstract inheritor of {cls} must have exactly one non-default field"
+                    f"A non-abstract inheritor of {cls} must have exactly one non-default field (Found {[f.name for f in required_fields]})"
                 )
 
-            field = non_default_fields[0]
+            field = required_fields[0]
             cls.__simple_field__ = field
             cls.__pre_root_validators__ = [_dict_from_primitive]
 
