@@ -1,7 +1,6 @@
 # Copied almost verbatim from https://github.com/marketplace/actions/sphinx-build
 name: pytest
 on:
-  - pull_request
   - push
 
 jobs:
@@ -23,7 +22,7 @@ jobs:
           pip install -r requirements.txt
       - name: Test with pytest
         run: |
-          pytest . --junitxml=pytest.xml --cov-report=term-missing:skip-covered | tee pytest-coverage.txt
+          python -m pytest --cov=data_dag --junitxml=pytest.xml --cov-report=term-missing:skip-covered tests | tee pytest-coverage.txt
       - name: Pytest coverage comment
         id: coverageComment
         uses: MishaKav/pytest-coverage-comment@main
