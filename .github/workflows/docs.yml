@@ -1,9 +1,11 @@
-## Copied almost verbatim from https://github.com/marketplace/actions/sphinx-build
-#name: sphinx
-#on:
-#  - push
-#
-#jobs:
+# Copied almost verbatim from https://github.com/marketplace/actions/sphinx-build
+name: sphinx
+on:
+  push:
+    branches:
+      - master
+
+jobs:
 #  docs_build:
 #    runs-on: ubuntu-latest
 #    steps:
@@ -16,3 +18,38 @@
 #        with:
 #          name: DocumentationHTML
 #          path: docs/_build/html/
+
+  publish_gh_pages:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v3
+        with:
+          path: data-dag
+
+      - name: Checkout gh-pages
+        uses: actions/checkout@v3
+        with:
+          path: gh-pages
+          ref: gh-pages
+
+      - uses: ammaraskar/sphinx-action@master
+        with:
+          docs-folder: "daga-dag/docs/"
+
+      - name: Commit documentation changes
+        run: |
+          cp -r daga-dag/docs/_build/html/* gh-pages/
+          cd gh-pages
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git commit -m "Update documentation" -a || true
+          # The above command will fail if no changes were present, so we ignore
+          # the return code.
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          branch: gh-pages
+          directory: gh-pages
+          github_token: ${{ secrets.GITHUB_TOKEN }}
