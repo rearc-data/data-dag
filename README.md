@@ -1,3 +1,6 @@
+![PyPI](https://img.shields.io/pypi/v/data-dag)
+
+
 Overview
 ========
 

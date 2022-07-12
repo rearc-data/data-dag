@@ -1,5 +1,5 @@
 # Copied almost verbatim from https://github.com/marketplace/actions/sphinx-build
-name: "Pull Request Docs Check"
+name: sphinx
 on:
   - push
 
