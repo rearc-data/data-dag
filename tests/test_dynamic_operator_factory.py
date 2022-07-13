@@ -161,3 +161,44 @@ def test_failure_both_specified_and_explicit_type():
     with pytest.raises(TypeError):
         # This is more up for debate: should this fail when "type" is given, even when it's correct?
         A1.parse_obj({"type": "type1", "x": "junk"})
+
+
+def test_customize_type_name():
+    class ABase(DynamicOperatorFactory, abc.ABC):
+        __type_kwarg_name__ = "different_type"
+
+    class A1(ABase):
+        __type_name__ = "type1"
+        x: str
+
+    class A2(ABase):
+        __type_name__ = "type2"
+        y: str
+
+    class BBase(DynamicOperatorFactory, abc.ABC):
+        pass
+
+    class B1(BBase):
+        __type_name__ = "type1"
+        a: str
+
+    class B2(BBase):
+        __type_name__ = "type2"
+        b: str
+
+    assert ABase.__known_subclasses__ == {
+        "type1": A1,
+        "type2": A2,
+    }
+    assert BBase.__known_subclasses__ == {
+        "type1": B1,
+        "type2": B2,
+    }
+
+    a1 = ABase.parse_obj({"different_type": "type1", "x": "lol"})
+    assert isinstance(a1, A1)
+    assert a1.x == "lol"
+
+    b2 = BBase.parse_obj({"type": "type2", "b": "yup"})
+    assert isinstance(b2, B2)
+    assert b2.b == "yup"

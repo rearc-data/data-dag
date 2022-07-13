@@ -11,6 +11,7 @@ overview
 installation
 getting_started
 usage/index
+reference/modules
 changelog
 ```
 

@@ -4,7 +4,7 @@ import warnings
 
 from pydantic.main import ModelMetaclass
 
-from data_dag.operator_factory import OperatorFactory
+from .base import OperatorFactory, OperatorComponent
 
 
 class _DynamicModelMetaclass(ModelMetaclass):
@@ -51,9 +51,7 @@ class _DynamicModelMetaclass(ModelMetaclass):
 
 # With much help from
 # https://stackoverflow.com/questions/23374715/changing-the-bases-of-an-object-based-on-arguments-to-init
-class DynamicOperatorFactory(
-    OperatorFactory, abc.ABC, metaclass=_DynamicModelMetaclass
-):
+class _DynamicOperatorBase:
     __type_name__ = None
     __default_type_name__ = None
     __type_kwarg_name__ = "type"
@@ -68,3 +66,60 @@ class DynamicOperatorFactory(
                 )
 
             cls.__known_subclasses__[subtype_name] = cls
+
+
+class DynamicOperatorFactory(
+    OperatorFactory, _DynamicOperatorBase, abc.ABC, metaclass=_DynamicModelMetaclass
+):
+    """An OperatorFactory that can automatically instantiate sub-classes based on the input data.
+
+    Consider the following example::
+
+        class InputFile(DynamicOperatorFactory, abc.ABC):
+            pass
+
+        class LocalFile(InputFile):
+            __type_name__ = 'local'
+
+            path: str
+
+        class S3File(InputFile):
+            __type_name__ = 's3'
+
+            bucket: str
+            key: str
+
+        InputFile.parse_obj({'type': 's3', 'bucket': 'my-bucket', 'key': 'my-key'})
+        # S3File(bucket='my-bucket', key='my-key')
+
+    Note how the type of object that gets instantiated is dynamically chosen from the data, rather than specified by the code. This allows a supertype to be used in code, and for the subtype to be chosen at runtime based on data.
+
+    To use a dynamic factory, define your base supertype to inherit directly from :py:class:`DynamicOperatorFactory` and :py:class:`abc.ABC`. The class can be totally empty, as in the example above. This top-level class will be populated with a dictionary that will automatically track subclasses as they get define.
+
+    .. warning::
+
+        It's important to remember that, while subtypes are automatically tracked upon definition, they must still be imported somewhere. Make sure that when the supertype is imported, the subtypes also eventually get imported, or else they will be unavailable at DAG resolution time.
+
+    Subclasses must either define ``__type_name__ = "some_name"`` or else inherit from :py:class:`abc.ABC` to indicate that they are abstract. Classes that are not abstract and not named will generate a warning.
+
+    A default subtype can be specified using ``__default_type_name__`` in the top-level type. Note that this is the ``__type_name__`` of the default subclass, not the class name itself.
+
+    By default, the subclass is chosen by the ``"type"`` key in the input data. This can be changed by setting ``__type_kwarg_name__`` in the top-level type to some other string. This key will be stripped from the input data and all other keys will be passed along to the subtype's constructor without further modification.
+
+    Attempting to construct a top-level object, either directly (with its constructor) or using ``parse_obj``, without specifying a "type" (or whatever you renamed the key to be) will result in a :py:exc:`TypeError`.
+
+    .. note::
+
+        Pydantic already supports Union types, so why would we use a custom DynamicOperatorFactory instead?
+
+        Dynamic factories provide two key advantages:
+
+        - The subtype selected is explicit rather than implicit. The subtypes don't need to be distinguishable in any other way besides their ``__type_name__``, nor is there any kind of ordering of the subtypes.
+        - The list of options is automatically maintained, as long as the modules containing the subtypes are sure to be imported. That is, another component or factory can use the top-level type to annotate one of its fields, and the subtypes will automatically be implied.
+    """
+
+
+class DynamicOperatorComponent(
+    OperatorComponent, _DynamicOperatorBase, abc.ABC, metaclass=_DynamicModelMetaclass
+):
+    """Identical to :py:class:`DynamicOperatorFactory` but based on :py:class:`OperatorComponent` instead."""

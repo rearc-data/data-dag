@@ -27,9 +27,9 @@ Common workflows that all abstractions share are:
 (dag_factory)=
 ### DAG Factory
 
-A DAG factory constructs a complete DAG, and contains related DAG metadata (such as schedule, name, and start date). It can compose together operator factories, or it can be entirely self-container, or a mix.
+A {py:class}`~data_dag.dag_factory.DagFactory` constructs a complete DAG, and contains related DAG metadata (such as schedule, name, and start date). It can compose together operator factories, or it can be entirely self-container, or a mix.
 
-The base factory class provides definitions for virtually all attributes of {py:class}`airflow.models.dag.DAG`, such that your custom factory classes need only define any additional attributes needed for your particular DAG. It also provides a convenience implementation of `make_dag` that is effectively the following:
+The base factory class provides definitions for virtually all attributes of {py:class}`~airflow.models.dag.DAG`, such that your custom factory classes need only define any additional attributes needed for your particular DAG. It also provides a convenience implementation of {py:meth}`~data_dag.dag_factory.DagFactory.make_dag` that is effectively the following:
 
 ```python
 def make_dag(self, *args, **kwargs):
@@ -38,17 +38,20 @@ def make_dag(self, *args, **kwargs):
     return dag
 ```
 
-That is, your custom factory, in general, needs only define {py:func}`_make_dag` to create and link the operators needed for your DAG. See the [example DAG](example_dag) for reference.
+That is, your custom factory, in general, needs only define {py:meth}`~data_dag.dag_factory.DagFactory._make_dag` to create and link the operators needed for your DAG. See the [example DAG](example_dag) for reference.
 
 (operator_factory)=
 ### Operator Factory
 
-Operator factories are used to create one or more operators as a pattern. The result should generally be a single operator-like object, or a list (though your calling code will need to know how to handle this properly).
+```{py:currentmodule} data_dag.operator_factory
+```
+
+An {py:class}`.OperatorFactory` use used to create one or more operators as a pattern. The result should generally be a single operator-like object, or a list (though your calling code will need to know how to handle this properly).
 
 Let's create, as an example, a universal Docker abstraction. We'll start with a simple wrapper around a DockerOperator:
 
 ```python
-from data_dag.operator import OperatorFactory
+from data_dag.operator_factory import OperatorFactory
 
 from airflow.providers.docker.operators.docker import DockerOperator
 
@@ -150,7 +153,7 @@ This approach allows for factories to become flexible abstractions for common fu
 (components)=
 ### Components
 
-Not every abstraction directly maps to a DAG or operator, or even a collection of operators. For example, you might want an abstraction for a file in S3 that can be re-used in a variety of other operator factories:
+Not every abstraction directly maps to a DAG or operator, or even a collection of operators. For example, you might want an abstraction for a file in S3 that can be re-used in a variety of other operator factories. This can still be data-driven using {py:class}`.OperatorComponent`:
 
 ```python
 from data_dag.operator_factory import OperatorComponent, OperatorFactory
@@ -193,7 +196,7 @@ file_path:
   path: 'path/to/file.txt'
 ```
 
-The same is true of {py:class}`SimpleOperatorFactory` relative to {py:class}`OperatorFactory`. In fact, since the above sample code uses both a {py:class}`SimpleOperatorComponent` and a {py:class}`SimpleOperatorFactory`, the entire operator can be defined using a string rather than a full dictionary:
+The same is true of {py:class}`.SimpleOperatorFactory` relative to {py:class}`.OperatorFactory`. In fact, since the above sample code uses both a {py:class}`.SimpleOperatorComponent` and a {py:class}`.SimpleOperatorFactory`, the entire operator can be defined using a string rather than a full dictionary:
 
 ```python
 CheckFileExists.parse_obj('path/to/file.txt')
@@ -231,7 +234,7 @@ columns:
 (using_abstractions)=
 ## Using abstractions
 
-All abstractions in `data-dag` are `pydantic` models, meaning that all usual Pydantic features are available. This section is a quick introduction to how those features allow for making data-driven DAGs.
+All abstractions in {py:mod}`data_dag` are {py:mod}`pydantic` models, meaning that all usual Pydantic features are available. This section is a quick introduction to how those features allow for making data-driven DAGs.
 
 ### Interacting with dictionaries
 

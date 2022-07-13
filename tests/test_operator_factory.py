@@ -3,8 +3,8 @@ from typing import Any, Dict, Optional
 import pytest
 from airflow.operators.dummy import DummyOperator
 
-from data_dag.operator_factory import OperatorFactory
-from data_dag.operator_factory.base import (
+from data_dag.operator_factory import (
+    OperatorFactory,
     SimpleOperatorFactory,
     SimpleOperatorComponent,
 )
