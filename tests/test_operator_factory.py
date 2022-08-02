@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any, Dict, Optional
 
 import pytest
@@ -7,6 +8,12 @@ from data_dag.operator_factory import (
     OperatorFactory,
     SimpleOperatorFactory,
     SimpleOperatorComponent,
+)
+
+_junk_dag_kwargs = dict(
+    dag_id="junk",
+    schedule_interval="@daily",
+    start_date=datetime.today(),
 )
 
 
@@ -22,6 +29,30 @@ def test_basic():
     airflow_op = op.make_operator()
     assert isinstance(airflow_op, DummyOperator)
     assert airflow_op.task_id == "Add_5.0"
+
+
+def test_not_implemented1():
+    class SampleOp(OperatorFactory):
+        pass
+
+    with pytest.raises(NotImplementedError):
+        SampleOp().default_task_id
+
+
+def test_not_implemented2():
+    class SampleOp(OperatorFactory):
+        @property
+        def default_task_id(self) -> str:
+            return "junk"
+
+    from data_dag.dag_factory import DagFactory
+
+    class SampleDag(DagFactory):
+        def _make_dag(self):
+            SampleOp().make_operator()
+
+    with pytest.raises(NotImplementedError):
+        SampleDag(**_junk_dag_kwargs).make_dag()
 
 
 def test_failure_direct_instantiation():
@@ -74,3 +105,31 @@ def test_none_not_the_same_as_undefined():
     class SampleOp(SimpleOperatorComponent):
         a: int
         b: Optional[int]  # Defaults to None, so there's only one undefined field
+
+
+def test_task_id_and_task_group():
+    class SampleOp(OperatorFactory):
+        i: int
+
+        @property
+        def default_task_id(self):
+            return f"add_{self.i}"
+
+        def _make_operators(self, *args, **kwargs) -> None:
+            load_value = DummyOperator(task_id="load")
+            compute_result = DummyOperator(task_id="compute")
+            finish = DummyOperator(task_id="finish")
+
+            load_value >> compute_result >> finish
+
+    from data_dag.dag_factory import DagFactory
+
+    class SampleDag(DagFactory):
+        def _make_dag(self):
+            SampleOp(i=3).make_operator()
+
+    dag = SampleDag(**_junk_dag_kwargs).make_dag()
+    load, compute, finish = dag.tasks
+    assert load.task_id == "add_3.load"
+    assert compute.task_id == "add_3.compute"
+    assert finish.task_id == "add_3.finish"
