@@ -14,9 +14,11 @@ class OperatorFactory(BaseModel, abc.ABC):
 
     @property
     def default_task_id(self) -> str:
+        """If overridden, defines a default task ID when none is manually specified"""
         raise NotImplementedError()
 
     def get_task_id(self):
+        """Provides the custom task ID if provided, else this factory's default task ID"""
         return self.task_id or self.default_task_id
 
     @contextlib.contextmanager
@@ -29,9 +31,10 @@ class OperatorFactory(BaseModel, abc.ABC):
     def make_operator(
         self, *args, **kwargs
     ) -> Union[TaskMixin, Sequence[TaskMixin], None]:
-        """Should generate zero or more operator-like things.
+        """Converts this factory metadata into an operator.
 
-        To wrap a pattern of operators into a single operator-like object, use :py:class:`airflow.utils.task_group.TaskGroup`.
+        If you need to create multiple operators, whether connected or not, implement :py:meth:`_make_operators`
+        instead, and they will be automatically wrapped in a :py:class:`airflow.utils.task_group.TaskGroup`.
 
         Returns:
             Zero or more operator-like things. The code that calls this should know how to handle the possible return types for this particular factory.
@@ -42,7 +45,8 @@ class OperatorFactory(BaseModel, abc.ABC):
         return group
 
     def _make_operators(self, *args, **kwargs) -> None:
-        """Can be implemented instead of :py:meth:`make_operator` to define an operator collection inside a default TaskGroup"""
+        """Can be implemented instead of :py:meth:`make_operator` to define an operator collection inside a
+        default :py:class:`airflow.utils.task_group.TaskGroup`"""
         raise NotImplementedError()
 
 

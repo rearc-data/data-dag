@@ -63,11 +63,12 @@ class DagFactory(BaseModel, abc.ABC):
 
     @property
     def default_dag_kwargs(self) -> Dict:
-        """Override this property in a subclass to provide default arguments to the DAG constructor."""
+        """Override this property in a subclass to provide default arguments to the
+        :py:class:`airflow.models.dag.DAG` constructor."""
         return {}
 
     def make_dag_object(self, **overrides) -> DAG:
-        """Creates the basic :py:class:`~airflow.models.dag.DAG` object represented by this metadata.
+        """Creates the basic :py:class:`airflow.models.dag.DAG` object represented by this metadata.
 
         This doesn't populate the DAG with nodes, it is only responsible for creating the initial DAG object.
         """
@@ -83,7 +84,7 @@ class DagFactory(BaseModel, abc.ABC):
         return DAG(**kwargs)
 
     def make_dag(self, *args, dag_overrides: Optional[Dict] = None, **kwargs) -> DAG:
-        """Creates and populates a :py:class:`~airflow.models.dag.DAG` represented by this metadata"""
+        """Creates and populates a :py:class:`airflow.models.dag.DAG` represented by this metadata"""
         dag = self.make_dag_object(**(dag_overrides or {}))
         with dag:
             self._make_dag(*args, **kwargs)
@@ -91,5 +92,5 @@ class DagFactory(BaseModel, abc.ABC):
         return dag
 
     def _make_dag(self, *args, **kwargs) -> None:
-        """Override this method in a subclass to populate the :py:class:`~airflow.models.dag.DAG` object with nodes and edges"""
+        """Override this method in a subclass to populate the :py:class:`airflow.models.dag.DAG` object with nodes and edges"""
         raise NotImplementedError()

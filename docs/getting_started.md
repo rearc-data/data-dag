@@ -29,6 +29,21 @@ Common workflows that all abstractions share are:
 
 A {py:class}`~data_dag.dag_factory.DagFactory` constructs a complete DAG, and contains related DAG metadata (such as schedule, name, and start date). It can compose together operator factories, or it can be entirely self-container, or a mix.
 
+```python
+from typing import List
+from data_dag.dag_factory import DagFactory
+from data_dag.operator_factory import OperatorFactory
+
+
+class SimpleChainDag(DagFactory):
+    ops: List[OperatorFactory]
+
+    def _make_dag(self, *args, **kwargs) -> None:
+        operator_instances = [op.make_operator() for op in self.ops]
+        for a, b in zip(operator_instances[:-1], operator_instances[1:]):
+            a >> b
+```
+
 The base factory class provides definitions for virtually all attributes of {py:class}`~airflow.models.dag.DAG`, such that your custom factory classes need only define any additional attributes needed for your particular DAG. It also provides a convenience implementation of {py:meth}`~data_dag.dag_factory.DagFactory.make_dag` that is effectively the following:
 
 ```python
