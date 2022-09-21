@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.2.1
+
+- Extracted BaseOperatorFactory to allow for opting-out of Task ID functionality
+
 ## Version 0.2.0
 
 - Added explicit support for Task ID's to OperatorFactory.
