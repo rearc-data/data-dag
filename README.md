@@ -1,18 +1,14 @@
-![PyPI](https://img.shields.io/pypi/v/data-dag)
+[![Documentation Status](https://readthedocs.org/projects/data-dag/badge/?version=latest)](https://data-dag.readthedocs.io/en/latest/?badge=latest) ![PyPI](https://img.shields.io/pypi/v/data-dag)
 
-
-Overview
-========
+# Overview
 
 `data-dag` is a library for writing data-defined Airflow DAGs and operators.
 
-Installation
-============
+# Installation
 
 ```pip install data-dag```
 
-Example
-=======
+# Example
 
 Re-usable operator and DAG template can be stored in a central location, such as a custom Airflow plugin (or a package within `dags/` works fine too):
 
@@ -99,8 +95,7 @@ dag = DownloaderDag.parse_obj(dag_data).make_dag()
 
 ![img.png](docs/_images/img.png)
 
-Multiple DAGs
--------------
+## Multiple DAGs
 
 Obviously, using a template isn't much use if you only fill it in once. Here's a simple example of a loader that will load any number of YML files from a folder and publish each one as a DAG in Airflow:
 
@@ -128,7 +123,6 @@ for yaml_file_path in dag_dir.glob('typical_dags/**.yml'):
     globals()[dag_name] = dag
 ```
 
-Documentation
-=============
+# Documentation
 
 Complete docs can be found at [https://data-dag.rtfd.org/]
