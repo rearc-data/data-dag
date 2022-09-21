@@ -22,7 +22,7 @@ copyright = "2022, David Maxson (david.maxson@rearc.io)"
 author = "David Maxson (david.maxson@rearc.io)"
 
 # The full version, including alpha/beta/rc tags
-release = "0.2.0"
+release = "0.2.1"
 
 # -- General configuration ---------------------------------------------------
 
