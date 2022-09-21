@@ -125,4 +125,4 @@ for yaml_file_path in dag_dir.glob('typical_dags/**.yml'):
 
 # Documentation
 
-Complete docs can be found at [https://data-dag.rtfd.org/]
+[Complete docs can be found here](https://data-dag.rtfd.org/)
