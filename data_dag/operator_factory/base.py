@@ -7,7 +7,19 @@ from airflow.utils.task_group import TaskGroup
 from pydantic import BaseModel
 
 
-class OperatorFactory(BaseModel, abc.ABC):
+class BaseOperatorFactory(BaseModel, abc.ABC):
+    def make_operator(
+        self, *args, **kwargs
+    ) -> Union[TaskMixin, Sequence[TaskMixin], None]:
+        """Converts this factory metadata into an operator.
+
+        Returns:
+            Zero or more operator-like things. The code that calls this should know how to handle the possible return types for this particular factory.
+        """
+        raise NotImplementedError()
+
+
+class OperatorFactory(BaseOperatorFactory, abc.ABC):
     """An interface for writing operator factories."""
 
     task_id: Optional[str]

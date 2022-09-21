@@ -9,6 +9,7 @@ from data_dag.operator_factory import (
     SimpleOperatorFactory,
     SimpleOperatorComponent,
 )
+from data_dag.operator_factory.base import BaseOperatorFactory
 
 _junk_dag_kwargs = dict(
     dag_id="junk",
@@ -53,6 +54,14 @@ def test_not_implemented2():
 
     with pytest.raises(NotImplementedError):
         SampleDag(**_junk_dag_kwargs).make_dag()
+
+
+def test_not_implemented3():
+    class SampleOp(BaseOperatorFactory):
+        pass
+
+    with pytest.raises(NotImplementedError):
+        SampleOp().make_operator()
 
 
 def test_failure_direct_instantiation():
