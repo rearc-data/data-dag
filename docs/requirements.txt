@@ -1,9 +1,5 @@
 pydantic
-apache-airflow
-requests
-pyyaml
 sphinx
 myst-parser
 sphinxcontrib-mermaid
 sphinx-rtd-theme
-apache-airflow-providers-docker

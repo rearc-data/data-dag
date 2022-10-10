@@ -38,6 +38,7 @@ This allows separating the input data definition for a type from its internal re
 
 Note that, in many cases, {py:mod}`pydantic` may already have features that allow a variety of tweaks without needing a custom constructor. Single- and multi-field validation and transformation, amongst other features, are well-supported.
 
+(component)=
 ## Components
 
 {py:class}`OperatorFactory` defines a standard interface for how the operator should be constructed from the metadata, and provides the `task_id` attribute by default to facilitate that. {py:class}`OperatorComponent`, on the other hand, is currently just a proxy for {py:class}`pydantic.BaseModel` to encourage a consistent pattern for sharing data and validation across a DAG. This may change in the future.
