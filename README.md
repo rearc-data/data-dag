@@ -126,3 +126,7 @@ for yaml_file_path in dag_dir.glob('typical_dags/**.yml'):
 # Documentation
 
 [Complete docs can be found here](https://data-dag.rtfd.org/)
+
+[//]: # (TODO)
+[//]: # (- Add DAG loader factory to enable a 2-liner DAG python file
+[//]: # (- Add dependency group mixin or something )
