@@ -1,6 +1,6 @@
 import abc
-from datetime import timedelta, datetime
-from typing import Optional, Dict, List, Iterable, Union
+from datetime import datetime, timedelta
+from typing import Dict, Iterable, List, Optional, Union
 
 from airflow.models.dag import DAG
 from pydantic import BaseModel

@@ -1,7 +1,12 @@
 [build-system]
-requires = [
-    "setuptools>=42",
-    "build",
-    "wheel"
-]
-build-backend = "setuptools.build_meta"
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "data-dag"
+readme = "README.md"
+authors = [{name = "Rearc Data", email = "data@rearc.io"}]
+dynamic = ["version", "description"]
+
+[project.urls]
+Home = "https://github.com/rearc-data/data-dag"

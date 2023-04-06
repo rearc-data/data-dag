@@ -9,8 +9,16 @@ repos:
     -   id: check-yaml
         args: ['--unsafe']  # Temporary workaround while we still have cloudformation files
     -   id: check-added-large-files
+
 -   repo: https://github.com/psf/black
     rev: 22.3.0
     hooks:
     -   id: black
         additional_dependencies: ['click!=8.1.0']
+
+-   repo: https://github.com/charliermarsh/ruff-pre-commit
+    # Ruff version.
+    rev: 'v0.0.254'
+    hooks:
+    -   id: ruff
+        args: ["--fix"]

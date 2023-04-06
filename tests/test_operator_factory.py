@@ -6,8 +6,8 @@ from airflow.operators.dummy import DummyOperator
 
 from data_dag.operator_factory import (
     OperatorFactory,
-    SimpleOperatorFactory,
     SimpleOperatorComponent,
+    SimpleOperatorFactory,
 )
 from data_dag.operator_factory.base import BaseOperatorFactory
 
