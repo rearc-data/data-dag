@@ -1,6 +1,6 @@
 import abc
 import contextlib
-from typing import Union, Sequence, Optional
+from typing import Optional, Sequence, Union
 
 from airflow.models.taskmixin import TaskMixin
 from airflow.utils.task_group import TaskGroup

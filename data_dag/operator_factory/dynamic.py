@@ -4,12 +4,12 @@ import warnings
 
 from pydantic.main import ModelMetaclass
 
-from .base import OperatorFactory, OperatorComponent
+from .base import OperatorComponent, OperatorFactory
 
 
 class _DynamicModelMetaclass(ModelMetaclass):
     def __new__(mcs, *args, **kwargs):
-        cls = super(_DynamicModelMetaclass, mcs).__new__(mcs, *args, **kwargs)
+        cls = super().__new__(mcs, *args, **kwargs)
         cls.__known_subclasses__ = dict()
         return cls
 

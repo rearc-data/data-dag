@@ -1,11 +1,11 @@
 import abc
 import inspect
-from typing import Type, Any
+from typing import Any, Type
 
 from pydantic import BaseModel
 from typing_extensions import get_origin
 
-from .base import OperatorFactory, OperatorComponent
+from .base import OperatorComponent, OperatorFactory
 
 
 def _dict_from_primitive(cls: "Type[_SimpleModelMixin]", obj):
