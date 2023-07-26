@@ -39,4 +39,3 @@ namespaces = false
 
 [tool.pytest.ini_options]
 addopts = "--cov=data_dag --cov-report term-missing --cov-report html"
-
