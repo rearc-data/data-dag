@@ -3,6 +3,7 @@ from typing import Any, Dict, Optional
 
 import pytest
 from airflow.operators.dummy import DummyOperator
+from pydantic import ValidationError
 
 from data_dag.operator_factory import (
     OperatorFactory,
@@ -142,3 +143,14 @@ def test_task_id_and_task_group():
     assert load.task_id == "add_3.load"
     assert compute.task_id == "add_3.compute"
     assert finish.task_id == "add_3.finish"
+
+
+def test_strict():
+    class SampleOp(OperatorFactory):
+        to_add: float
+
+        def make_operator(self, *args, **kwargs):
+            return DummyOperator(task_id=f"Add_{self.to_add}")
+
+    with pytest.raises(ValidationError):
+        SampleOp.parse_obj(dict(to_subtract=3))

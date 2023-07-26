@@ -17,7 +17,7 @@ requires-python = ">=3.7"
 dependencies = [
     "apache-airflow",
     "typing_extensions>=4",
-    "pydantic>=1",
+    "pydantic>=2",
 ]
 
 [project.readme]
@@ -25,8 +25,8 @@ file = "README.md"
 content-type = "text/markdown"
 
 [project.urls]
-Homepage = "https://github.com/rearc-data/data_dag"
-"Bug Tracker" = "https://github.com/rearc-data/data_dag/issues"
+Homepage = "https://github.com/rearc-data/data-dag"
+"Bug Tracker" = "https://github.com/rearc-data/data-dag/issues"
 
 [tool.setuptools]
 include-package-data = false

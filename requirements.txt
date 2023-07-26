@@ -1,5 +1,5 @@
 # Core
-pydantic
+pydantic>=2
 apache-airflow
 
 # Testing
