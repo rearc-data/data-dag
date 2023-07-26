@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Iterable, List, Optional, Union
 
 from airflow.models.dag import DAG
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 
 
 class DagFactory(BaseModel, abc.ABC):
@@ -60,6 +60,9 @@ class DagFactory(BaseModel, abc.ABC):
     jinja_environment_kwargs: Optional[Dict] = None
     render_template_as_native_obj: bool = False
     tags: Optional[List[str]] = None
+
+    class Config:
+        extra = Extra.forbid
 
     @property
     def default_dag_kwargs(self) -> Dict:

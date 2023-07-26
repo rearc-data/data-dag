@@ -4,10 +4,13 @@ from typing import Optional, Sequence, Union
 
 from airflow.models.taskmixin import TaskMixin
 from airflow.utils.task_group import TaskGroup
-from pydantic import BaseModel
+from pydantic import BaseModel, Extra
 
 
 class BaseOperatorFactory(BaseModel, abc.ABC):
+    class Config:
+        extra = Extra.forbid
+
     def make_operator(
         self, *args, **kwargs
     ) -> Union[TaskMixin, Sequence[TaskMixin], None]:
@@ -65,4 +68,5 @@ class OperatorFactory(BaseOperatorFactory, abc.ABC):
 class OperatorComponent(BaseModel, abc.ABC):
     """A non-operator component for use in other operator factories. Just a proxy for :py:class:`pydantic.BaseModel`."""
 
-    pass
+    class Config:
+        extra = Extra.forbid

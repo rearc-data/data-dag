@@ -4,9 +4,39 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "data-dag"
-readme = "README.md"
-authors = [{name = "Rearc Data", email = "data@rearc.io"}]
 dynamic = ["version", "description"]
+authors = [
+    { name = "Rearc Data", email = "data@rearc.io" },
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.7"
+dependencies = [
+    "apache-airflow",
+    "typing_extensions>=4",
+    "pydantic>=1",
+]
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
 
 [project.urls]
-Home = "https://github.com/rearc-data/data-dag"
+Homepage = "https://github.com/rearc-data/data_dag"
+"Bug Tracker" = "https://github.com/rearc-data/data_dag/issues"
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.packages.find]
+where = [
+    ".",
+]
+namespaces = false
+
+[tool.pytest.ini_options]
+addopts = "--cov=data_dag --cov-report term-missing --cov-report html"
+
