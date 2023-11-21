@@ -18,7 +18,7 @@ All three are interfaces over a `pydantic` model, and thus provide much of the s
 
 Common workflows that all abstractions share are:
 
-- Can use `parse_obj` to instantiate the class from a dictionary of data (e.g., from a YAML or JSON file)
+- Can use `model_validate` to instantiate the class from a dictionary of data (e.g., from a YAML or JSON file)
 - Can also be directly constructed in-code, just like any other `pydantic`-based class
 - Can have custom field validation that goes well beyond mere type verification or coercion (e.g. checking that a string matches a regex, or that a number is within a given range, or converting a string to an enum)
 - `*args, **kwargs` can often be passed to the primary methods of the various factories; however, it is recommended to make each class's attributes self-contained such that the factory can be executed without any additional arguments.
@@ -214,7 +214,7 @@ file_path:
 The same is true of {py:class}`.SimpleOperatorFactory` relative to {py:class}`.OperatorFactory`. In fact, since the above sample code uses both a {py:class}`.SimpleOperatorComponent` and a {py:class}`.SimpleOperatorFactory`, the entire operator can be defined using a string rather than a full dictionary:
 
 ```python
-CheckFileExists.parse_obj('path/to/file.txt')
+CheckFileExists.model_validate('path/to/file.txt')
 # CheckFileExists(file_path=Path(path='path/to/file.txt', is_file=True))
 ```
 
@@ -257,7 +257,7 @@ Several common data languages, such as YAML and JSON, serialize collections of s
 
 When these files are loaded into memory, e.g. using `json` or `pyyaml`, the result is an in-memory object comprised of simple data types. Beyond the most trivial use cases, these objects are typically nested and represent a variety of application-specific details. Working directly with these raw dictionaries and lists is likely to involve a lot of boilerplate code; however, if we can map this data into classes, creating useful object instances, we can tie data directly into the functionality related to it.
 
-To do this mapping from in-memory data (no matter where it was loaded from or how it was constructed), `pydantic` allows us to use `MyType.parse_obj(data)` where `MyType` is the factory or component that is represented by the data.
+To do this mapping from in-memory data (no matter where it was loaded from or how it was constructed), `pydantic` allows us to use `MyType.model_validate(data)` where `MyType` is the factory or component that is represented by the data.
 
 ```{note}
 This approach requires that your full top-level data object maps directly onto a Python type. In general, this either isn't hard or is a good idea to add; however, you can also parse out pieces of the data, or restructure it, to match the data types you've defined, especially if you're working with a legacy or shared data schema that isn't easy to modify. Another option is to add [a custom `__init__`](custom_constructor) to a top-level type that knows how to interpret a slightly different input data schema.
@@ -289,7 +289,7 @@ class EmailAllUsers(DagFactory):
 You could load an email list from the following YAML:
 ```yaml
 dag_id: email_users
-schedule_interval: '@weekly'
+schedule: '@weekly'
 
 emails:
   - email_address: sample@example.com
@@ -305,7 +305,7 @@ This would produce the following in-memory object:
 ```python
 data = {
     'dag_id': 'email_users',
-    'schedule_interval': '@weekly',
+    'schedule': '@weekly',
     'email_upon_completion': {
         'email_address': 'admin@my.site.com',
         'message_html': '<p>All messages sent</p>'
@@ -319,7 +319,7 @@ data = {
 
 Which we can then parse as:
 ```python
-dag_metadata = EmailAllUsers.parse_obj(data)
+dag_metadata = EmailAllUsers.model_validate(data)
 # EmailAllUsers(
 #   dag_id='email_users',
 #   ...

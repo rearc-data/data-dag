@@ -1,10 +1,14 @@
 import abc
-from typing import List
+from typing import List, Literal
 
 import pytest
+from pydantic import ValidationError
 
 from data_dag.operator_factory import OperatorFactory
-from data_dag.operator_factory.dynamic import DynamicOperatorFactory
+from data_dag.operator_factory.dynamic import (
+    DynamicOperatorComponent,
+    DynamicOperatorFactory,
+)
 
 
 def test_direct_dynamic_class():
@@ -12,28 +16,24 @@ def test_direct_dynamic_class():
         pass
 
     class A1(ABase):
-        __type_name__ = "type1"
+        type: Literal["type1"] = "type1"
         x: str
 
     class A2(ABase):
-        __type_name__ = "type2"
+        type: Literal["type2"] = "type2"
         x: str
 
     class A3(ABase):
-        __type_name__ = "type3"
+        type: Literal["type3"] = "type3"
         x: str
 
     class Root(OperatorFactory):
-        a: ABase
+        a: ABase.discriminated_annotation() = ABase.discrimated_field()
 
-    assert ABase.__known_subclasses__ == {
-        "type1": A1,
-        "type2": A2,
-        "type3": A3,
-    }
+    assert ABase.__known_subclasses__ == [A1, A2, A3]
 
     obj = {"a": {"type": "type2", "x": "yolo"}}
-    obj = Root.parse_obj(obj)
+    obj = Root.model_validate(obj)
     assert isinstance(obj, Root)
     obj1 = obj.a
     assert isinstance(obj1, A2)
@@ -45,25 +45,21 @@ def test_indirect_dynamic_class():
         pass
 
     class A1(ABase):
-        __type_name__ = "type1"
+        type: Literal["type1"] = "type1"
         x: str
 
     class A2(ABase):
-        __type_name__ = "type2"
+        type: Literal["type2"] = "type2"
         x: str
 
     class A3(ABase):
-        __type_name__ = "type3"
+        type: Literal["type3"] = "type3"
         x: str
 
     class Root(OperatorFactory):
-        a: List[ABase]
+        a: List[ABase.discriminated_annotation()] = ABase.discrimated_field()
 
-    assert ABase.__known_subclasses__ == {
-        "type1": A1,
-        "type2": A2,
-        "type3": A3,
-    }
+    assert set(ABase.__known_subclasses__) == {A1, A2, A3}
 
     obj = {
         "a": [
@@ -71,7 +67,7 @@ def test_indirect_dynamic_class():
             {"type": "type1", "x": "wassup"},
         ]
     }
-    obj = Root.parse_obj(obj)
+    obj = Root.model_validate(obj)
     assert isinstance(obj, Root)
     assert len(obj.a) == 2
     obj1, obj2 = obj.a
@@ -80,34 +76,7 @@ def test_indirect_dynamic_class():
     assert isinstance(obj2, A1)
     assert obj2.x == "wassup"
 
-    assert ABase.parse_obj({"type": "type1", "x": "yolo"}) == A1.parse_obj(
-        {"x": "yolo"}
-    )
-
-
-def test_default_dynamic_class():
-    class ABase(DynamicOperatorFactory, abc.ABC):
-        __default_type_name__ = "type2"
-
-    class A1(ABase):
-        __type_name__ = "type1"
-        x: str
-
-    class A2(ABase):
-        __type_name__ = "type2"
-        x: str
-
-    a1 = ABase.parse_obj({"type": "type1", "x": "wassup"})
-    assert isinstance(a1, A1)
-    assert a1.x == "wassup"
-
-    a2 = ABase.parse_obj({"type": "type2", "x": "lol"})
-    assert isinstance(a2, A2)
-    assert a2.x == "lol"
-
-    ad = ABase.parse_obj({"x": "default thing"})
-    assert isinstance(ad, A2)
-    assert ad.x == "default thing"
+    assert ABase.model_validate(dict(type="type1", x="yolo")) == A1(x="yolo")
 
 
 def test_failure_erroneous_dynamic_class():
@@ -115,18 +84,20 @@ def test_failure_erroneous_dynamic_class():
         pass
 
     class A1(ABase):
-        __type_name__ = "type1"
+        type: Literal["type1"] = "type1"
         x: str
 
     class A2(ABase):
-        __type_name__ = "type2"
+        type: Literal["type2"] = "type2"
         x: str
 
-    pytest.raises(TypeError, ABase.parse_obj, {"type": "typeNone", "x": "wassup"})
+    pytest.raises(
+        ValidationError, ABase.model_validate, {"type": "typeNone", "x": "wassup"}
+    )
 
 
 def test_failure_no_type_name():
-    with pytest.warns(UserWarning):
+    with pytest.raises(TypeError):
 
         class ABase(DynamicOperatorFactory, abc.ABC):
             pass
@@ -140,11 +111,11 @@ def test_failure_no_type_given():
         pass
 
     class A1(ABase):
-        __type_name__ = "type1"
+        type: Literal["type1"] = "type1"
         x: str
 
-    with pytest.raises(TypeError):
-        ABase.parse_obj({"x": "junk"})
+    with pytest.raises(ValidationError):
+        ABase.model_validate({"x": "junk"})
 
 
 def test_failure_both_specified_and_explicit_type():
@@ -152,15 +123,11 @@ def test_failure_both_specified_and_explicit_type():
         pass
 
     class A1(ABase):
-        __type_name__ = "type1"
+        type: Literal["type1"] = "type1"
         x: str
 
-    with pytest.raises(TypeError):
-        A1.parse_obj({"type": "type2", "x": "junk"})
-
-    with pytest.raises(TypeError):
-        # This is more up for debate: should this fail when "type" is given, even when it's correct?
-        A1.parse_obj({"type": "type1", "x": "junk"})
+    with pytest.raises(ValidationError):
+        A1.model_validate({"type": "type2", "x": "junk"})
 
 
 def test_customize_type_name():
@@ -168,37 +135,44 @@ def test_customize_type_name():
         __type_kwarg_name__ = "different_type"
 
     class A1(ABase):
-        __type_name__ = "type1"
+        different_type: Literal["type1"] = "type1"
         x: str
 
     class A2(ABase):
-        __type_name__ = "type2"
+        different_type: Literal["type2"] = "type2"
         y: str
 
     class BBase(DynamicOperatorFactory, abc.ABC):
         pass
 
     class B1(BBase):
-        __type_name__ = "type1"
+        type: Literal["type1"] = "type1"
         a: str
 
     class B2(BBase):
-        __type_name__ = "type2"
+        type: Literal["type2"] = "type2"
         b: str
 
-    assert ABase.__known_subclasses__ == {
-        "type1": A1,
-        "type2": A2,
-    }
-    assert BBase.__known_subclasses__ == {
-        "type1": B1,
-        "type2": B2,
-    }
+    assert set(ABase.__known_subclasses__) == {A1, A2}
+    assert set(BBase.__known_subclasses__) == {B1, B2}
 
-    a1 = ABase.parse_obj({"different_type": "type1", "x": "lol"})
+    a1 = ABase.model_validate({"different_type": "type1", "x": "lol"})
     assert isinstance(a1, A1)
     assert a1.x == "lol"
 
-    b2 = BBase.parse_obj({"type": "type2", "b": "yup"})
+    b2 = BBase.model_validate({"type": "type2", "b": "yup"})
     assert isinstance(b2, B2)
     assert b2.b == "yup"
+
+
+def test_basic_dynamic_component():
+    class Uri(DynamicOperatorComponent, abc.ABC):
+        pass
+
+    class S3Uri(Uri):
+        type: Literal["s3"] = "s3"
+        bucket: str
+        key: str
+
+    uri = Uri.model_validate(dict(type="s3", bucket="my-bucket", key="my-key"))
+    assert uri == S3Uri(bucket="my-bucket", key="my-key")

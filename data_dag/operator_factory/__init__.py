@@ -3,6 +3,7 @@ from .base import (
     OperatorFactory,
 )
 from .dynamic import (
+    DynamicOperatorComponent,
     DynamicOperatorFactory,
 )
 from .simple import (
@@ -16,4 +17,5 @@ __all__ = (
     "SimpleOperatorFactory",
     "SimpleOperatorComponent",
     "DynamicOperatorFactory",
+    "DynamicOperatorComponent",
 )

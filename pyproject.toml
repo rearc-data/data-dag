@@ -13,11 +13,11 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 dependencies = [
-    "apache-airflow",
+    "apache-airflow>=2.6.3",
     "typing_extensions>=4",
-    "pydantic>=2",
+    "pydantic==2.*",
 ]
 
 [project.readme]
