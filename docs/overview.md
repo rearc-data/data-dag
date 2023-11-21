@@ -30,7 +30,7 @@ from data_dag.dag_factory import DagFactory
 
 from urllib.request import urlretrieve
 from typing import List
-from airflow.operators.dummy import DummyOperator
+from airflow.operators.empty import EmptyOperator
 from airflow.providers.http.sensors.http import HttpSensor
 from airflow.operators.python import PythonOperator
 from airflow.utils.task_group import TaskGroup
@@ -64,8 +64,8 @@ class DownloaderDag(DagFactory):
     downloads: List[DownloadOperator]
 
     def _make_dag(self):
-        start = DummyOperator(task_id='start')
-        end = DummyOperator(task_id='end')
+        start = EmptyOperator(task_id='start')
+        end = EmptyOperator(task_id='end')
 
         for download in self.downloads:
             start >> download.make_operator() >> end
@@ -78,7 +78,7 @@ Then a definition for a particular DAG can live in a data file:
 
 dag_id: sample_dag
 description: An example of how to write a data-driven DAG
-schedule_interval: '@daily'
+schedule: '@daily'
 start_date: '2020-01-01T00:00:00'
 downloads:
 - name: data
@@ -100,7 +100,7 @@ from my_factories.download import DownloaderDag
 with open('yaml/sample_dag.yaml', 'r') as f:
     dag_data = safe_load(f)
 
-dag = DownloaderDag.parse_obj(dag_data).make_dag()
+dag = DownloaderDag.model_validate(dag_data).make_dag()
 ```
 
 ![img.png](_images/img.png)
@@ -126,7 +126,7 @@ for yaml_file_path in dag_dir.glob('typical_dags/**.yml'):
         dag_metadata = yaml.safe_load(f)
 
     # ... generate a DAG from that metadata
-    dag_metadata_obj = BaseDag.parse_obj(dag_metadata)
+    dag_metadata_obj = BaseDag.model_validate(dag_metadata)
     dag = dag_metadata_obj.make_dag()
 
     # See https://www.astronomer.io/guides/dynamically-generating-dags/

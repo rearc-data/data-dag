@@ -2,20 +2,23 @@ import abc
 import inspect
 from typing import Any, Type
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
+from pydantic.fields import FieldInfo
 from typing_extensions import get_origin
 
 from .base import OperatorComponent, OperatorFactory
 
 
 def _dict_from_primitive(cls: "Type[_SimpleModelMixin]", obj):
-    assert cls.__simple_field__ is not None
+    assert cls.__simple_field__ is not None and isinstance(
+        cls.__simple_field__, FieldInfo
+    )
+
     if not isinstance(obj, dict):
-        return {cls.__simple_field__.name: obj}
+        return {cls.__simple_field__name__: obj}
     else:
         # Check if we're expecting a dictionary...
-        tp = cls.__simple_field__.outer_type_
-        tp = get_origin(tp) or tp
+        tp = get_origin(cls.__simple_field__.annotation)
         if isinstance(tp, type) and issubclass(tp, dict):
             raise NotImplementedError(
                 "Not yet sure how to handle sanitizing a dictionary when the class is just a proxy for a dictionary field"
@@ -27,27 +30,34 @@ def _dict_from_primitive(cls: "Type[_SimpleModelMixin]", obj):
 class _SimpleModelMixin:
     """A mixin to support single-field pydantic models being parsed directly from primitives rather than requiring dictionaries"""
 
-    def __init_subclass__(cls, **kwargs):
+    @classmethod
+    def __pydantic_init_subclass__(cls, **_kwargs):
         assert issubclass(cls, BaseModel)
 
         if not inspect.isabstract(cls) and abc.ABC not in cls.__bases__:
             required_fields = [
-                field for field in cls.__fields__.values() if field.required
+                (field_name, field)
+                for field_name, field in cls.model_fields.items()
+                if field.is_required()
             ]
             if len(required_fields) != 1:
                 raise TypeError(
-                    f"A non-abstract inheritor of {cls} must have exactly one non-default field (Found {[f.name for f in required_fields]})"
+                    f"The non-abstract model {cls} must have exactly one non-default field (Found {required_fields} out of {cls.model_fields})"
                 )
 
-            field = required_fields[0]
+            field_name, field = required_fields[0]
+            cls.__simple_field__name__ = field_name
             cls.__simple_field__ = field
-            cls.__pre_root_validators__ = [_dict_from_primitive]
+            # cls.__pre_root_validators__ = [_dict_from_primitive]
+
+    @model_validator(mode="before")
+    @classmethod
+    def _convert_to_dict_if_scalar(cls, data: Any) -> Any:
+        return _dict_from_primitive(cls, data)
 
     @classmethod
-    def _enforce_dict_if_root(cls, obj: Any) -> Any:
-        obj = super()._enforce_dict_if_root(obj)
-        obj = _dict_from_primitive(cls, obj)
-        return obj
+    def model_validate(cls, data: Any):
+        return super().model_validate(_dict_from_primitive(cls, data))
 
 
 class SimpleOperatorFactory(_SimpleModelMixin, OperatorFactory, abc.ABC):
@@ -63,14 +73,14 @@ class SimpleOperatorFactory(_SimpleModelMixin, OperatorFactory, abc.ABC):
         class FilePath(SimpleOperatorFactory):
             path: str  # <-- single required field
             is_file: bool = True  # <-- optional field (because of default)
-            mime_type: Optional[str]  # <-- optional field (because of Optional type)
+            mime_type: str | None  # <-- optional field (because of Optional type)
 
             def make_operator(self):
                 ...
 
     Normally, this object could only be instantiated using a dictionary::
 
-        FilePath.parse_obj({'path': 'path/to/file.txt'})
+        FilePath.model_validate({'path': 'path/to/file.txt'})
 
         # Or, in YAML:
         # outer_object:
@@ -81,7 +91,7 @@ class SimpleOperatorFactory(_SimpleModelMixin, OperatorFactory, abc.ABC):
 
     However, because we inherit from :py:class:`SimpleOperatorFactory`, we can instantiate a ``FilePath`` by specifying just the ``path`` literal::
 
-        FilePath.parse_obj('path/to/file.txt')
+        FilePath.model_validate('path/to/file.txt')
 
         # Or, in YAML:
         # outer_object:

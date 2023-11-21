@@ -2,7 +2,12 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 
 import pytest
-from airflow.operators.dummy import DummyOperator
+
+try:
+    from airflow.operators.empty import EmptyOperator
+except ImportError:
+    from airflow.operators.dummy import DummyOperator as EmptyOperator
+from pydantic import ValidationError
 
 from data_dag.operator_factory import (
     OperatorFactory,
@@ -13,7 +18,7 @@ from data_dag.operator_factory.base import BaseOperatorFactory
 
 _junk_dag_kwargs = dict(
     dag_id="junk",
-    schedule_interval="@daily",
+    schedule="@daily",
     start_date=datetime.today(),
 )
 
@@ -23,12 +28,12 @@ def test_basic():
         to_add: float
 
         def make_operator(self, *args, **kwargs):
-            return DummyOperator(task_id=f"Add_{self.to_add}")
+            return EmptyOperator(task_id=f"Add_{self.to_add}")
 
     data = {"to_add": 5}
-    op = SampleOp.parse_obj(data)
+    op = SampleOp.model_validate(data)
     airflow_op = op.make_operator()
-    assert isinstance(airflow_op, DummyOperator)
+    assert isinstance(airflow_op, EmptyOperator)
     assert airflow_op.task_id == "Add_5.0"
 
 
@@ -65,7 +70,7 @@ def test_not_implemented3():
 
 
 def test_failure_direct_instantiation():
-    pytest.raises(NotImplementedError, OperatorFactory.parse_obj({}).make_operator)
+    pytest.raises(NotImplementedError, OperatorFactory.model_validate({}).make_operator)
 
 
 def test_simple():
@@ -78,17 +83,17 @@ def test_simple():
         def make_operator(self):
             raise NotImplementedError()
 
-    op = SampleOp.parse_obj(5)
+    op = SampleOp.model_validate(5)
     assert isinstance(op, SampleOp)
     assert op.i == 5
     assert op.flag is True
 
-    op = SampleOp.parse_obj({"i": 5})
+    op = SampleOp.model_validate({"i": 5})
     assert isinstance(op, SampleOp)
     assert op.i == 5
     assert op.flag is True
 
-    op = SampleOp.parse_obj({"i": 5, "flag": False})
+    op = SampleOp.model_validate({"i": 5, "flag": False})
     assert isinstance(op, SampleOp)
     assert op.i == 5
     assert op.flag is False
@@ -107,13 +112,13 @@ def test_simple_failure_dict_field():
         d: Dict[str, Any]
 
     with pytest.raises(NotImplementedError):
-        SampleOp.parse_obj(dict())
+        SampleOp.model_validate(dict())
 
 
 def test_none_not_the_same_as_undefined():
     class SampleOp(SimpleOperatorComponent):
         a: int
-        b: Optional[int]  # Defaults to None, so there's only one undefined field
+        b: Optional[int] = None
 
 
 def test_task_id_and_task_group():
@@ -125,9 +130,9 @@ def test_task_id_and_task_group():
             return f"add_{self.i}"
 
         def _make_operators(self, *args, **kwargs) -> None:
-            load_value = DummyOperator(task_id="load")
-            compute_result = DummyOperator(task_id="compute")
-            finish = DummyOperator(task_id="finish")
+            load_value = EmptyOperator(task_id="load")
+            compute_result = EmptyOperator(task_id="compute")
+            finish = EmptyOperator(task_id="finish")
 
             load_value >> compute_result >> finish
 
@@ -142,3 +147,14 @@ def test_task_id_and_task_group():
     assert load.task_id == "add_3.load"
     assert compute.task_id == "add_3.compute"
     assert finish.task_id == "add_3.finish"
+
+
+def test_strict():
+    class SampleOp(OperatorFactory):
+        to_add: float
+
+        def make_operator(self, *args, **kwargs):
+            return EmptyOperator(task_id=f"Add_{self.to_add}")
+
+    with pytest.raises(ValidationError):
+        SampleOp.model_validate(dict(to_subtract=3))

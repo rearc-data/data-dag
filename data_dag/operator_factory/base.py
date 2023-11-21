@@ -4,12 +4,11 @@ from typing import Optional, Sequence, Union
 
 from airflow.models.taskmixin import TaskMixin
 from airflow.utils.task_group import TaskGroup
-from pydantic import BaseModel, Extra
+from pydantic import BaseModel, ConfigDict
 
 
 class BaseOperatorFactory(BaseModel, abc.ABC):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")
 
     def make_operator(
         self, *args, **kwargs
@@ -25,7 +24,7 @@ class BaseOperatorFactory(BaseModel, abc.ABC):
 class OperatorFactory(BaseOperatorFactory, abc.ABC):
     """An interface for writing operator factories."""
 
-    task_id: Optional[str]
+    task_id: Optional[str] = None
 
     @property
     def default_task_id(self) -> str:
@@ -68,5 +67,4 @@ class OperatorFactory(BaseOperatorFactory, abc.ABC):
 class OperatorComponent(BaseModel, abc.ABC):
     """A non-operator component for use in other operator factories. Just a proxy for :py:class:`pydantic.BaseModel`."""
 
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")

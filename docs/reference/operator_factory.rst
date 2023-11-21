@@ -13,3 +13,5 @@ data\_dag.operator\_factory
 .. autoclass:: SimpleOperatorComponent
 
 .. autoclass:: DynamicOperatorFactory
+
+.. autoclass:: DynamicOperatorComponent

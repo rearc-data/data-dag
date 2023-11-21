@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Iterable, List, Optional, Union
 
 from airflow.models.dag import DAG
-from pydantic import BaseModel, Extra
+from pydantic import BaseModel, ConfigDict
 
 
 class DagFactory(BaseModel, abc.ABC):
@@ -16,9 +16,9 @@ class DagFactory(BaseModel, abc.ABC):
 
         class MyKindOfDag(DagFactory):
             def _make_dag(self):
-                start = DummyOperator(...)
+                start = EmptyOperator(...)
                 do_something = PythonOperator(...)
-                end = DummyOperator(...)
+                end = EmptyOperator(...)
 
                 start >> do_something >> end
 
@@ -38,7 +38,7 @@ class DagFactory(BaseModel, abc.ABC):
 
     dag_id: str
     description: Optional[str] = None
-    schedule_interval: Union[timedelta, str, None] = None
+    schedule: Union[timedelta, str, None] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     full_filepath: Optional[str] = None
@@ -60,9 +60,7 @@ class DagFactory(BaseModel, abc.ABC):
     jinja_environment_kwargs: Optional[Dict] = None
     render_template_as_native_obj: bool = False
     tags: Optional[List[str]] = None
-
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")
 
     @property
     def default_dag_kwargs(self) -> Dict:
@@ -79,7 +77,7 @@ class DagFactory(BaseModel, abc.ABC):
         kwargs.update(
             {
                 field: getattr(self, field, None)
-                for field in DagFactory.__fields__
+                for field in DagFactory.model_fields
                 if getattr(self, field, None) is not None
             }
         )
